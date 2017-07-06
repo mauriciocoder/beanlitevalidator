@@ -6,6 +6,9 @@ import com.bon.validator.annotation.Required;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 
 public class Validator {
   /**
@@ -15,7 +18,12 @@ public class Validator {
    * @return
    */
   public static <T> boolean isValid(T obj) {
+    return validate(obj).count() <= 0;
+  }
+  
+  public static <T> Stream<Violation> validate(T obj) {
     Field[] fields = obj.getClass().getDeclaredFields();
+    List<Violation> violations = new ArrayList<Violation>();
     for (Field field : fields) {
       Required r = field.getAnnotation(Required.class);
       if (r != null) {
@@ -23,6 +31,10 @@ public class Validator {
         try {
           Class<?> fieldType = field.getType();
           Object fieldValue = field.get(obj);
+          if (fieldValue == null) {
+            violations.add(new Violation(field.toString(), "is null"));
+            continue;
+          }
           // evaluate string object
           if (fieldType == String.class) {
             InvalidValue[] invalidValues = r.invalidValues();
@@ -30,19 +42,16 @@ public class Validator {
               if (value == BLANK) {
                 if (StringUtils.isBlank((String) fieldValue)) {
                   // Blank string
-                  return false;
+                  violations.add(new Violation(field.toString(), "is blank"));
                 }
               }
             }
-          }
-          if (fieldValue == null) {
-            return false;
           }
         } catch (IllegalAccessException e) {
           throw new RuntimeException(e);
         }
       }
     }
-    return true;
+    return violations.stream();
   }
 }
