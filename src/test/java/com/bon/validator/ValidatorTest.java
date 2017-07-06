@@ -1,6 +1,5 @@
-package validator;
+package com.bon.validator;
 
-import com.bon.validator.Validator;
 import com.bon.validator.annotation.Required;
 import static com.bon.validator.annotation.InvalidValue.BLANK;
 import org.junit.Test;
